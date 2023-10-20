@@ -13,15 +13,15 @@ async function main() {
   await consumer.deployed();
   const finalMessage = dedent`
     🎉 Your Consumer Contract has been deployed, check it out here: https://mumbai.polygonscan.com/address/${consumer.address}
-    
+
     You also need to set up the consumer contract address in your .env file:
-    
+
     MUMBAI_CONSUMER_CONTRACT_ADDRESS=${consumer.address}
   `
   console.log(`\n${finalMessage}\n`);
 
   console.log('Sending a request...');
-  await consumer.connect(deployer).request("0x01");
+  await consumer.connect(deployer).requestMeetingAirdrop("03dec8c8-ad63-4f3a-9615-0a2b0049790d");
   console.log('Done');
 }
 

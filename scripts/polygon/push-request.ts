@@ -13,7 +13,7 @@ async function main() {
   ])
 
   console.log('Pushing a request...');
-  await consumer.connect(deployer).request("0x8221");
+  await consumer.connect(deployer).requestMeetingAirdrop("03dec8c8-ad63-4f3a-9615-0a2b0049790d");
   console.log('Done');
 }
 

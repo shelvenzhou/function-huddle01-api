@@ -16,7 +16,16 @@ const DEPLOYER_PRIVATE_KEY =
 const POLYGONSCAN_API_KEY = process.env.POLYGONSCAN_API_KEY || '';
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.17",
+  solidity: {
+    version: "0.8.17",
+    // to reduce the compiled contract size
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 1000,
+      },
+    },
+  },
   networks: {
     polygon: {
       // If not set, you can get your own Alchemy API key at https://dashboard.alchemyapi.io or https://infura.io

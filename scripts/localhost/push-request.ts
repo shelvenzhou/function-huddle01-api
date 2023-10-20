@@ -13,7 +13,7 @@ async function main() {
   }
   const consumer = OracleConsumerContract.attach(consumerSC);
   console.log("Pushing a request...");
-  await consumer.connect(deployer).request("0x01");
+  await consumer.connect(deployer).requestMeetingAirdrop("03dec8c8-ad63-4f3a-9615-0a2b0049790d");
   consumer.on("ResponseReceived", async (reqId: number, pair: string, value: string) => {
     console.info("Received event [ResponseReceived]:", {
       reqId,
