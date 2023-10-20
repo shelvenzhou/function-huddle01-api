@@ -57,10 +57,19 @@ const uintArrayCoder = new Coders.ArrayCoder(uintCoder, 10, "uint256");
 
 const uintCoder = new Coders.NumberCoder(32, false, "uint256");
 const bytesCoder = new Coders.BytesCoder("bytes");
+const addressCoder = new Coders.AddressCoder("address");
+const addressesCoder = new Coders.ArrayCoder(addressCoder, -1, "address[]");
 
-function encodeReply(reply: [number, number, number]): HexString {
-  return Coders.encode([uintCoder, uintCoder, uintCoder], reply) as HexString;
+
+// data format: (uint respType, uint id, uint errno, address[] memory data)
+function encodeReply(reply: [number, number, number, string[]]): HexString {
+  return Coders.encode([uintCoder, uintCoder, uintCoder, addressesCoder], reply) as HexString;
 }
+
+type Secrets = {
+  // Huddle01 api key from https://huddle01.com/docs/api-keys
+  apiKey?: string
+};
 
 // Defined in OracleConsumerContract.sol
 const TYPE_RESPONSE = 0;
@@ -71,6 +80,7 @@ enum Error {
   FailedToFetchData = "FailedToFetchData",
   FailedToDecode = "FailedToDecode",
   MalformedRequest = "MalformedRequest",
+  ApiKeyNotFound = "ApiKeyNotFound",
 }
 
 function errorToCode(error: Error): number {
@@ -83,6 +93,8 @@ function errorToCode(error: Error): number {
       return 3;
     case Error.MalformedRequest:
       return 4;
+    case Error.ApiKeyNotFound:
+      return 5;
     default:
       return 0;
   }
@@ -101,28 +113,12 @@ function stringToHex(str: string): string {
   return "0x" + hex;
 }
 
-function fetchApiStats(apiUrl: string, reqStr: string): any {
-  // reqStr should be any valid hex string
+function fetchParticipants(meetingId: string, apiKey: string): any {
   let headers = {
     "Content-Type": "application/json",
-    "User-Agent": "phat-contract",
+    "x-api-key": apiKey,
   };
-  let query = JSON.stringify({
-    query: `query Profile {
-            profile(request: { profileId: \"${reqStr}\" }) {
-                stats {
-                    totalFollowers
-                    totalFollowing
-                    totalPosts
-                    totalComments
-                    totalMirrors
-                    totalPublications
-                    totalCollects
-                }
-            }
-        }`,
-  });
-  let body = stringToHex(query);
+  let url = `https://api.huddle01.com/api/v1/rooms/paticipant-list?meetingId=${meetingId}`;
   //
   // In Phat Contract runtime, we not support async/await, you need use `pink.batchHttpRequest` to
   // send http request. The Phat Contract will return an array of response.
@@ -130,10 +126,9 @@ function fetchApiStats(apiUrl: string, reqStr: string): any {
   let response = pink.batchHttpRequest(
     [
       {
-        url: apiUrl,
-        method: "POST",
+        url,
+        method: "GET",
         headers,
-        body,
         returnTextBody: true,
       },
     ],
@@ -141,8 +136,7 @@ function fetchApiStats(apiUrl: string, reqStr: string): any {
   )[0]; // Notice the [0]. This is important bc the `pink.batchHttpRequest` function expects an array of up to 5 HTTP requests.
   if (response.statusCode !== 200) {
     console.log(
-      `Fail to read Lens api with status code: ${response.statusCode}, error: ${
-        response.error || response.body
+      `Fail to read Huddle01 api with status code: ${response.statusCode}, error: ${response.error || response.body
       }}`
     );
     throw Error.FailedToFetchData;
@@ -152,6 +146,28 @@ function fetchApiStats(apiUrl: string, reqStr: string): any {
     throw Error.FailedToDecode;
   }
   return JSON.parse(respBody);
+}
+
+function mockFetchParticipants(): any {
+  return {
+    "roomId": "emo-orrj-uvh",
+    "hostWalletAddress": [],
+    "duration": 244,
+    "participants": [
+      {
+        "displayName": "Phala1",
+        "walletAddress": "0xD0fE316B9f01A3b5fd6790F88C2D53739F80B464"
+      },
+      {
+        "displayName": "Phala2",
+        "walletAddress": "0x32ba037C90BDF3Ef7Afb3C76F24A070f7778eEE1"
+      },
+      {
+        "displayName": "Jane Doe",
+        "walletAddress": null
+      }
+    ]
+  };
 }
 
 function parseReqStr(hexStr: string): string {
@@ -193,23 +209,32 @@ export default function main(request: HexString, secrets: string): HexString {
     [requestId, encodedReqStr] = Coders.decode([uintCoder, bytesCoder], request);
   } catch (error) {
     console.info("Malformed request received");
-    return encodeReply([TYPE_ERROR, 0, errorToCode(error as Error)]);
+    return encodeReply([TYPE_ERROR, 0, errorToCode(error as Error), []]);
   }
   const parsedHexReqStr = parseReqStr(encodedReqStr as string);
-  console.log(`Request received for profile ${parsedHexReqStr}`);
+  console.log(`Request received for meeting ${parsedHexReqStr}`);
+
+  const parsedSecrets = JSON.parse(secrets) as Secrets;
+  if (parsedSecrets.apiKey === undefined) {
+    throw Error.ApiKeyNotFound;
+  }
 
   try {
-    const respData = fetchApiStats(secrets, parsedHexReqStr);
-    let stats = respData.data.profile.stats.totalPosts;
-    console.log("response:", [TYPE_RESPONSE, requestId, stats]);
-    return encodeReply([TYPE_RESPONSE, requestId, stats]);
+    // const respData = fetchParticipants(parsedHexReqStr, parsedSecrets.apiKey);
+    const respData = mockFetchParticipants();
+    let participants = []
+    for (var p of respData.participants) {
+      if (p.walletAddress) participants.push(p.walletAddress);
+    }
+    console.log("response:", [TYPE_RESPONSE, requestId, participants]);
+    return encodeReply([TYPE_RESPONSE, requestId, 0, participants]);
   } catch (error) {
     if (error === Error.FailedToFetchData) {
       throw error;
     } else {
       // otherwise tell client we cannot process it
       console.log("error:", [TYPE_ERROR, requestId, error]);
-      return encodeReply([TYPE_ERROR, requestId, errorToCode(error as Error)]);
+      return encodeReply([TYPE_ERROR, requestId, errorToCode(error as Error), []]);
     }
   }
 }
