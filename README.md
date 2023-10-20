@@ -1,7 +1,7 @@
 # :hammer_and_pick: The Phat Contract Starter Kit
 > <u>**Note on Terminology**</u>
-> 
-> **Phat Contract** will also be referred to as the **Phala Oracle** in this `README`. 
+>
+> **Phat Contract** will also be referred to as the **Phala Oracle** in this `README`.
 ## :mag_right: Overview
 The Phat Contract Starter Kit is your one-stop solution to connect any API to your smart contract. It offers wide-ranging support for all EVM-compatible blockchains, including but not limited to Ethereum, Polygon, Arbitrum, Avalanche, Binance Smart Chain, Optimism, and zkSync.
 
@@ -20,23 +20,23 @@ To kickstart your journey with the Phat Contract Starter Kit, you have 2 options
 npx @phala/fn@latest init example
 ```
 
-<center>:rotating_light: <u><b>Note</b></u> :rotating_light:</center> 
+<center>:rotating_light: <u><b>Note</b></u> :rotating_light:</center>
 
 > When selecting your template, elect `phat-contract-starter-kit`.
 
 ```shell
 npx @phala/fn@latest init example
 ? Please select one of the templates for your "example" project: (Use arrow keys)
-❯ phat-contract-starter-kit. The Phat Contract Starter Kit 
-  lensapi-oracle-consumer-contract. Polygon Consumer Contract for LensAPI Oracle 
+❯ phat-contract-starter-kit. The Phat Contract Starter Kit
+  lensapi-oracle-consumer-contract. Polygon Consumer Contract for LensAPI Oracle
 ```
 
 :stop_sign: **Not so fast!** What is it exactly that we are building? :stop_sign:
 
-> **What are we building?** 
+> **What are we building?**
 >
 > The artifact we are compiling is a JavaScript file, serving as the Phat Contract Oracle's tailored logic. This script is designed to respond to requests initiated from the Consumer Contract. The diagram provided above offers a visual representation of this request-response interaction.
-> 
+>
 > **Why is it important?**
 >
 > In the context of the off-chain environment, on-chain Smart Contracts are inherently limited. Their functionality is confined to the information available to them within the on-chain ecosystem. This limitation underscores the critical need for a secure off-chain oracle, such as the Phat Contract. This oracle is capable of fetching and transforming data, thereby enhancing the intelligence and awareness of Smart Contracts about on-chain activities. This is a pivotal step towards bridging the gap between the on-chain and off-chain worlds, making Smart Contracts not just smart, but also informed.
@@ -52,7 +52,7 @@ yarn build-function
 ```
 To simulate the expected result locally, run the Phala Oracle function now with this command:
 ```bash
-yarn run-function -a 0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000043078303100000000000000000000000000000000000000000000000000000000 https://api-mumbai.lens.dev
+yarn run-function -a 0x0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000043078303100000000000000000000000000000000000000000000000000000000 {\"apiKey\":\"test\"}
 ```
 >
 > **What are the ingredients for the `yarn run-function` command?**
@@ -62,7 +62,7 @@ yarn run-function -a 0x000000000000000000000000000000000000000000000000000000000
 > The command's first parameter is a HexString, representing a tuple of types `[uintCoder, bytesCoder]`. This serves as the entry function. The second parameter is a `string`, embodying the configurable secrets fed into the main function.
 >
 > The `Coders.decode` function deciphers these parameters, yielding the decoded `requestId` and `encodedReqStr`. These decoded elements then become the raw material for the rest of the custom logic within the script.
-> ```typescript 
+> ```typescript
 > export default function main(request: HexString, secrets: string): HexString {
 >   console.log(`handle req: ${request}`);
 >   let requestId, encodedReqStr;
@@ -72,7 +72,7 @@ yarn run-function -a 0x000000000000000000000000000000000000000000000000000000000
 >     console.info("Malformed request received");
 >   }
 > // ...
-> } 
+> }
 
 <details>
   <summary><u>How the query looks under the hood</u></summary>
@@ -119,7 +119,7 @@ Finally, run the local end-to-end tests with this command. Here we will simulate
 ```bash
 yarn hardhat test
 ```
-:partying_face: **Congratulations!** 
+:partying_face: **Congratulations!**
 
 You have successfully completed the quick start. For the next steps, you will learn how to deploy your Phala Oracle and connect to the consumer contract for the EVM testnet chain to start testing the request-response model live.
 
